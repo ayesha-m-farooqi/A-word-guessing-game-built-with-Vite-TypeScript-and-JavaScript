@@ -7,6 +7,7 @@ class WordGuessingGame {
     this.score = 0;
     this.gameActive = true;
     this.guessedWords = [];
+    this.letterBoxes = [];
 
     this.initElements();
     this.loadWords();
@@ -14,7 +15,7 @@ class WordGuessingGame {
   }
 
   initElements() {
-    this.guessInput = document.getElementById('guessInput');
+    this.letterBoxesContainer = document.getElementById('letterBoxes');
     this.submitBtn = document.getElementById('submitBtn');
     this.resetBtn = document.getElementById('resetBtn');
     this.hintText = document.getElementById('hintText');
@@ -45,6 +46,67 @@ class WordGuessingGame {
       });
   }
 
+  createLetterBoxes(wordLength) {
+    this.letterBoxesContainer.innerHTML = '';
+    this.letterBoxes = [];
+
+    for (let i = 0; i < wordLength; i++) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'letter-box';
+      input.maxLength = '1';
+      input.disabled = false;
+      input.dataset.index = i;
+      input.autocomplete = 'off';
+
+      input.addEventListener('input', (e) => this.handleLetterInput(e, i));
+      input.addEventListener('keydown', (e) => this.handleKeyDown(e, i));
+
+      this.letterBoxesContainer.appendChild(input);
+      this.letterBoxes.push(input);
+    }
+
+    if (this.letterBoxes.length > 0) {
+      this.letterBoxes[0].focus();
+    }
+  }
+
+  handleLetterInput(e, index) {
+    const input = e.target;
+    const value = input.value.toUpperCase();
+
+    if (value) {
+      input.value = value;
+      // Move to next box
+      if (index < this.letterBoxes.length - 1) {
+        this.letterBoxes[index + 1].focus();
+      }
+    }
+  }
+
+  handleKeyDown(e, index) {
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      const input = this.letterBoxes[index];
+      input.value = '';
+
+      // Move to previous box on backspace
+      if (index > 0) {
+        this.letterBoxes[index - 1].focus();
+      }
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (index > 0) {
+        this.letterBoxes[index - 1].focus();
+      }
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (index < this.letterBoxes.length - 1) {
+        this.letterBoxes[index + 1].focus();
+      }
+    }
+  }
+
   startNewRound() {
     if (this.words.length === 0) {
       this.showMessage('No words available', 'error');
@@ -61,11 +123,16 @@ class WordGuessingGame {
     this.guessedWords = [];
 
     this.hintText.textContent = this.currentHint;
+    this.createLetterBoxes(this.currentWord.length);
     this.updateDisplay();
     this.clearMessage();
-    this.guessInput.disabled = false;
-    this.guessInput.focus();
+    this.submitBtn.disabled = false;
+    this.enableLetterBoxes();
     this.gameOverEl.classList.remove('show');
+
+    if (this.letterBoxes.length > 0) {
+      this.letterBoxes[0].focus();
+    }
   }
 
   handleGuess(e) {
@@ -75,15 +142,15 @@ class WordGuessingGame {
       return;
     }
 
-    const guess = this.guessInput.value.trim().toLowerCase();
+    const guess = this.letterBoxes.map(box => box.value).join('').toLowerCase();
 
-    if (!guess) {
-      this.showMessage('Please enter a guess', 'warning');
+    if (guess.length === 0) {
+      this.showMessage('Please enter all letters', 'warning');
       return;
     }
 
-    if (guess.length === 0) {
-      this.showMessage('Guess cannot be empty', 'warning');
+    if (guess.length !== this.currentWord.length) {
+      this.showMessage('Please fill all boxes', 'warning');
       return;
     }
 
@@ -99,16 +166,14 @@ class WordGuessingGame {
     } else {
       this.handleWrongGuess(guess);
     }
-
-    this.guessInput.value = '';
-    this.guessInput.focus();
   }
 
   handleCorrectGuess() {
     this.score++;
     this.updateDisplay();
+    this.highlightCorrectBoxes();
     this.showMessage(`🎉 Correct! The word is "${this.currentWord}"`, 'success');
-    this.guessInput.disabled = true;
+    this.disableLetterBoxes();
     this.gameActive = false;
 
     setTimeout(() => {
@@ -119,17 +184,56 @@ class WordGuessingGame {
   handleWrongGuess(guess) {
     this.guessesLeft--;
     this.updateDisplay();
+    this.highlightIncorrectBoxes();
     this.showMessage(`❌ Wrong! "${guess}" is not the word.`, 'error');
+
+    // Clear letter boxes for next guess
+    this.letterBoxes.forEach(box => {
+      box.value = '';
+      box.classList.remove('incorrect');
+    });
+
+    if (this.letterBoxes.length > 0) {
+      this.letterBoxes[0].focus();
+    }
 
     if (this.guessesLeft <= 0) {
       this.endGame();
     }
   }
 
+  highlightCorrectBoxes() {
+    this.letterBoxes.forEach(box => {
+      box.classList.add('correct');
+      box.disabled = true;
+    });
+  }
+
+  highlightIncorrectBoxes() {
+    this.letterBoxes.forEach(box => {
+      if (box.value) {
+        box.classList.add('incorrect');
+      }
+    });
+  }
+
+  disableLetterBoxes() {
+    this.letterBoxes.forEach(box => {
+      box.disabled = true;
+    });
+  }
+
+  enableLetterBoxes() {
+    this.letterBoxes.forEach(box => {
+      box.disabled = false;
+      box.classList.remove('correct', 'incorrect');
+    });
+  }
+
   endGame() {
     this.gameActive = false;
-    this.guessInput.disabled = true;
     this.submitBtn.disabled = true;
+    this.disableLetterBoxes();
 
     this.gameOverTitle.textContent = '😢 Game Over!';
     this.gameOverWord.textContent = `The word was: ${this.currentWord}`;
@@ -145,7 +249,6 @@ class WordGuessingGame {
     this.guessedWords = [];
 
     this.submitBtn.disabled = false;
-    this.guessInput.disabled = false;
     this.guessForm.reset();
 
     this.startNewRound();
