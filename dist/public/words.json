@@ -1,0 +1,44 @@
+{
+  "words": [
+    {
+      "word": "python",
+      "hint": "A popular programming language"
+    },
+    {
+      "word": "javascript",
+      "hint": "Web programming language used in browsers"
+    },
+    {
+      "word": "database",
+      "hint": "System for storing and managing data"
+    },
+    {
+      "word": "algorithm",
+      "hint": "Step-by-step procedure for solving a problem"
+    },
+    {
+      "word": "variable",
+      "hint": "Named storage for data in programming"
+    },
+    {
+      "word": "function",
+      "hint": "Reusable block of code that performs a task"
+    },
+    {
+      "word": "array",
+      "hint": "Collection of elements stored in one variable"
+    },
+    {
+      "word": "loop",
+      "hint": "Repeats code multiple times"
+    },
+    {
+      "word": "cloud",
+      "hint": "Internet-based storage and computing service"
+    },
+    {
+      "word": "router",
+      "hint": "Device that connects computers to the internet"
+    }
+  ]
+}
